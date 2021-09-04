@@ -1,11 +1,9 @@
-def lcm_loss(y_pred, label_sim_dist, y_true, alpha):
-    pred_probs = F.log_softmax(y_pred)
-    label_sim_dist = F.log_softmax(label_sim_dist)
-    simulated_y_true = F.log_softmax(label_sim_dist + alpha*y_true)
-    loss1 = -F.nll_loss(simulated_y_true, simulated_y_true)
-    loss2 = F.nll_loss(simulated_y_true, pred_probs)
-
-    return loss1 + loss2
+def lcm_loss(y_pred, label_sim_dist, y_true, num_classes=4, alpha=4):
+    pred_probs = F.softmax(y_pred, dim=-1)
+    label_sim_dist = F.softmax(label_sim_dist, dim=-1)
+    simulated_y_true = F.log_softmax(label_sim_dist + alpha*F.one_hot(y_true.long(), num_classes=num_classes), dim=1)
+    loss = F.kl_div(simulated_y_true, pred_probs, reduction='sum')
+    return loss
 
 class LCM_MultiClass(nn.Module):
     def __init__(self, lable_size, emb_dim, output_dim, padding_idx=None):
